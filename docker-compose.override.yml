@@ -1,0 +1,28 @@
+version: '3.4'
+services:
+ eshopwebmvc:
+   environment:
+     - ASPNETCORE_ENVIRONMENT=Docker
+     - ASPNETCORE_URLS=http://+:8080
+   ports:
+     - "5106:8080"
+   volumes:
+     # Dev certs and user secrets for root (some images run as root)
+     - ~/.aspnet/https:/root/.aspnet/https:ro
+     - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+     # Dev certs and user secrets for non-root app user (default in .NET 8 images)
+     - ~/.aspnet/https:/home/app/.aspnet/https:ro
+     - ~/.microsoft/usersecrets:/home/app/.microsoft/usersecrets:ro
+ eshoppublicapi:
+   environment:
+     - ASPNETCORE_ENVIRONMENT=Docker
+     - ASPNETCORE_URLS=http://+:8080
+   ports:
+     - "5200:8080"
+   volumes:
+     # Dev certs and user secrets for root (some images run as root)
+     - ~/.aspnet/https:/root/.aspnet/https:ro
+     - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+     # Dev certs and user secrets for non-root app user (default in .NET 8 images)
+     - ~/.aspnet/https:/home/app/.aspnet/https:ro
+     - ~/.microsoft/usersecrets:/home/app/.microsoft/usersecrets:ro
