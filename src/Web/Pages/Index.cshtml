@@ -1,45 +1,74 @@
 ﻿@page
+@model IndexModel
 @{
     ViewData["Title"] = "Catalog";
-    @model IndexModel
 }
 <section class="esh-catalog-hero">
     <div class="container">
         <img class="esh-catalog-title" src="~/images/main_banner_text.png" />
     </div>
 </section>
-<section class="esh-catalog-filters">
-    <div class="container">
-        <form method="get">
-            <label class="esh-catalog-label" data-title="brand">
-                <select asp-for="@Model.CatalogModel.BrandFilterApplied" asp-items="@Model.CatalogModel.Brands" class="esh-catalog-filter"></select>
-            </label>
-            <label class="esh-catalog-label" data-title="type">
-                <select asp-for="@Model.CatalogModel.TypesFilterApplied" asp-items="@Model.CatalogModel.Types" class="esh-catalog-filter"></select>
-            </label>
-            <input class="esh-catalog-send" type="image" src="~/images/arrow-right.svg" />
-        </form>
-    </div>
-</section>
+@if (Model.CatalogModel.Brands?.Any() == true || Model.CatalogModel.Types?.Any() == true)
+{
+    <section class="esh-catalog-filters">
+        <div class="container">
+            <form method="get" class="form-inline">
+                <label class="esh-catalog-label" data-title="brand">
+                    <select name="brandFilterApplied" class="esh-catalog-filter">
+                        @foreach (var b in Model.CatalogModel.Brands!)
+                        {
+                            <option value="@b.Value" selected="@b.Selected">@b.Text</option>
+                        }
+                    </select>
+                </label>
+                <label class="esh-catalog-label" data-title="type">
+                    <select name="typesFilterApplied" class="esh-catalog-filter">
+                        @foreach (var t in Model.CatalogModel.Types!)
+                        {
+                            <option value="@t.Value" selected="@t.Selected">@t.Text</option>
+                        }
+                    </select>
+                </label>
+                <label class="esh-catalog-label" data-title="page size">
+                    <select name="itemsPage" class="esh-catalog-filter">
+                        @foreach (var size in new[]{6,9,12,18,24})
+                        {
+                            <option value="@size" selected="@(size==Model.PageSize)">@size</option>
+                        }
+                    </select>
+                </label>
+                <input class="esh-catalog-send" type="image" src="~/images/arrow-right.svg" />
+            </form>
+        </div>
+    </section>
+}
 <div class="container">
     @if (Model.CatalogModel.CatalogItems.Any())
     {
-        <partial name="_pagination" for="CatalogModel.PaginationInfo" />
-
         <div class="esh-catalog-items row">
-            @foreach (var catalogItem in Model.CatalogModel.CatalogItems)
+            @foreach (var item in Model.CatalogModel.CatalogItems)
             {
                 <div class="esh-catalog-item col-md-4">
-                    <partial name="_product" for="@catalogItem" />
+                    <partial name="_product" model="item" />
                 </div>
             }
         </div>
-        <partial name="_pagination" for="CatalogModel.PaginationInfo" />
+        @if (Model.CatalogModel.PaginationInfo != null && Model.CatalogModel.PaginationInfo.TotalPages > 1)
+        {
+            <div class="row">
+                <form method="get" class="esh-pager">
+                    <input type="hidden" name="brandFilterApplied" value="@Model.CatalogModel.BrandFilterApplied" />
+                    <input type="hidden" name="typesFilterApplied" value="@Model.CatalogModel.TypesFilterApplied" />
+                    <input type="hidden" name="itemsPage" value="@Model.PageSize" />
+                    <button name="pageId" value="@(Model.CatalogModel.PaginationInfo.ActualPage - 1)" class="esh-pager-item @Model.CatalogModel.PaginationInfo.Previous" @(Model.CatalogModel.PaginationInfo.ActualPage == 0 ? "disabled" : null)>&lt;</button>
+                    <span class="esh-pager-item">Page @(Model.CatalogModel.PaginationInfo.ActualPage + 1) of @Model.CatalogModel.PaginationInfo.TotalPages</span>
+                    <button name="pageId" value="@(Model.CatalogModel.PaginationInfo.ActualPage + 1)" class="esh-pager-item @Model.CatalogModel.PaginationInfo.Next" @(Model.CatalogModel.PaginationInfo.ActualPage >= Model.CatalogModel.PaginationInfo.TotalPages - 1 ? "disabled" : null)>&gt;</button>
+                </form>
+            </div>
+        }
     }
     else
     {
-        <div class="esh-catalog-items row">
-            THERE ARE NO RESULTS THAT MATCH YOUR SEARCH
-        </div>
+        <div class="esh-catalog-items row">No products.</div>
     }
 </div>

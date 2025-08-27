@@ -1,32 +1,21 @@
 ﻿using MediatR;
-using Microsoft.eShopWeb.ApplicationCore.Entities.OrderAggregate;
-using Microsoft.eShopWeb.ApplicationCore.Interfaces;
-using Microsoft.eShopWeb.ApplicationCore.Specifications;
 using Microsoft.eShopWeb.Web.ViewModels;
+using Microsoft.eShopWeb.Web.Interfaces;
 
 namespace Microsoft.eShopWeb.Web.Features.MyOrders;
 
 public class GetMyOrdersHandler : IRequestHandler<GetMyOrders, IEnumerable<OrderViewModel>>
 {
-    private readonly IReadRepository<Order> _orderRepository;
+    private readonly IOrderApiClient _orderApiClient;
 
-    public GetMyOrdersHandler(IReadRepository<Order> orderRepository)
+    public GetMyOrdersHandler(IOrderApiClient orderApiClient)
     {
-        _orderRepository = orderRepository;
+        _orderApiClient = orderApiClient;
     }
 
     public async Task<IEnumerable<OrderViewModel>> Handle(GetMyOrders request,
         CancellationToken cancellationToken)
     {
-        var specification = new CustomerOrdersSpecification(request.UserName);
-        var orders = await _orderRepository.ListAsync(specification, cancellationToken);
-
-        return orders.Select(o => new OrderViewModel
-        {
-            OrderDate = o.OrderDate,
-            OrderNumber = o.Id,
-            ShippingAddress = o.ShipToAddress,
-            Total = o.Total()
-        });
+        return await _orderApiClient.ListOrdersAsync(request.UserName);
     }
 }

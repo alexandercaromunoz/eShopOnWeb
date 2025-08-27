@@ -9,10 +9,14 @@
     <DockerServiceName>eshopwebmvc</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="build.ps1" />
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+    <None Include="tests\IntegrationTests\IntegrationTests.csproj" />
+    <None Include="tests\UnitTests\MediatorHandlers\OrdersTests\GetMyOrders.cs" />
+    <None Include="tests\UnitTests\MediatorHandlers\OrdersTests\GetOrderDetails.cs" />
   </ItemGroup>
 </Project>

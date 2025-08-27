@@ -10,33 +10,40 @@
   .esh-basketstatus-image {
     height: 36px;
     margin-top: .5rem; }
-  .esh-basketstatus-badge {
-    background-color: #83D01B;
-    border-radius: 50%;
-    color: #FFFFFF;
-    display: block;
-    height: 1.5rem;
-    left: 50%;
-    position: absolute;
-    text-align: center;
-    top: 0;
-    transform: translateX(-38%);
-    transition: all 0.35s;
-    width: 1.5rem; }
-  .esh-basketstatus-badge-inoperative {
-    background-color: #ff0000;
-    border-radius: 50%;
-    color: #FFFFFF;
-    display: block;
-    height: 1.5rem;
-    left: 50%;
-    position: absolute;
-    text-align: center;
-    top: 0;
-    transform: translateX(-38%);
-    transition: all 0.35s;
-    width: 1.5rem; }
-  .esh-basketstatus:hover .esh-basketstatus-badge {
+/* Adjusted: center badge over icon vertically */
+.esh-basketstatus-badge {
+  background-color: #83D01B;
+  border-radius: 50%;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.5rem;
+  left: 50%;
+  position: absolute;
+  top: 0.05rem;
+  transform: translate(-38%, 0);
+  transition: all 0.35s;
+  width: 1.5rem;
+  line-height: 1;
+  font-size: .8rem; }
+.esh-basketstatus-badge-inoperative {
+  background-color: #ff0000;
+  border-radius: 50%;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.5rem;
+  left: 50%;
+  position: absolute;
+  top: 0.15rem;
+  transform: translate(-38%, 0);
+  transition: all 0.35s;
+  width: 1.5rem;
+  line-height: 1;
+  font-size: .8rem; }
+.esh-basketstatus:hover .esh-basketstatus-badge {
     background-color: transparent;
     color: #75b918;
     transition: all 0.35s; }

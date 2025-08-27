@@ -1,0 +1,13 @@
+@model Microsoft.eShopWeb.Web.ViewModels.CatalogItemViewModel
+<form asp-page="/Basket/Index" method="post">
+    <img class="esh-catalog-thumbnail" src="@Model.PictureUri" />
+    <div class="esh-catalog-name">
+        <span>@Model.Name</span>
+    </div>
+    <div class="esh-catalog-price">
+        <span>@Model.Price.ToString("N2")</span>
+    </div>
+    <input type="hidden" name="productId" value="@Model.Id" />
+    <input type="hidden" name="price" value="@Model.Price" />
+    <input class="esh-catalog-button" type="submit" value="[ ADD TO BASKET ]" />
+</form>

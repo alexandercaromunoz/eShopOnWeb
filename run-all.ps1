@@ -1,0 +1,1 @@
+$root = Split-Path -Parent $MyInvocation.MyCommand.Path Set-Location $root Start-Job -Name PublicApi -ScriptBlock { param($r) Set-Location $r dotnet run --project .\src\PublicApi\PublicApi.csproj --urls https://localhost:5099 } -ArgumentList $root | Out-Null Start-Sleep -Seconds 3 dotnet run --project .\src\Web\Web.csproj --urls https://localhost:5001

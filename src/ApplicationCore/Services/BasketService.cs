@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Ardalis.GuardClauses;
 using Ardalis.Result;
@@ -42,6 +43,21 @@ public class BasketService : IBasketService
         var basket = await _basketRepository.GetByIdAsync(basketId);
         Guard.Against.Null(basket, nameof(basket));
         await _basketRepository.DeleteAsync(basket);
+    }
+
+    public async Task ClearBasketAsync(int basketId)
+    {
+        var basket = await _basketRepository.GetByIdAsync(basketId);
+        Guard.Against.Null(basket, nameof(basket));
+        if (basket.Items.Count == 0) return;
+        // remove all items
+        foreach (var bi in basket.Items.ToList())
+        {
+            bi.SetQuantity(0); // will be removed by RemoveEmptyItems
+        }
+        basket.RemoveEmptyItems();
+        await _basketRepository.UpdateAsync(basket);
+        if (_logger != null) _logger.LogInformation("Basket {BasketId} cleared", basketId);
     }
 
     public async Task<Result<Basket>> SetQuantities(int basketId, Dictionary<string, int> quantities)

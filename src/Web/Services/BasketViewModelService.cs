@@ -1,93 +1,98 @@
-﻿using Microsoft.eShopWeb.ApplicationCore.Entities;
-using Microsoft.eShopWeb.ApplicationCore.Entities.BasketAggregate;
+﻿using Microsoft.eShopWeb.ApplicationCore.Entities.BasketAggregate;
 using Microsoft.eShopWeb.ApplicationCore.Interfaces;
 using Microsoft.eShopWeb.ApplicationCore.Specifications;
 using Microsoft.eShopWeb.Web.Interfaces;
 using Microsoft.eShopWeb.Web.Pages.Basket;
+using Microsoft.eShopWeb.ApplicationCore.Entities;
 
 namespace Microsoft.eShopWeb.Web.Services;
 
 public class BasketViewModelService : IBasketViewModelService
 {
     private readonly IRepository<Basket> _basketRepository;
-    private readonly IUriComposer _uriComposer;
+    private readonly IReadRepository<CatalogItem> _catalogItemRepository;
     private readonly IBasketQueryService _basketQueryService;
-    private readonly IRepository<CatalogItem> _itemRepository;
+    private readonly IUriComposer _uriComposer;
 
     public BasketViewModelService(IRepository<Basket> basketRepository,
-        IRepository<CatalogItem> itemRepository,
-        IUriComposer uriComposer,
-        IBasketQueryService basketQueryService)
+        IReadRepository<CatalogItem> catalogItemRepository,
+        IBasketQueryService basketQueryService,
+        IUriComposer uriComposer)
     {
         _basketRepository = basketRepository;
-        _uriComposer = uriComposer;
+        _catalogItemRepository = catalogItemRepository;
         _basketQueryService = basketQueryService;
-        _itemRepository = itemRepository;
+        _uriComposer = uriComposer;
     }
 
     public async Task<BasketViewModel> GetOrCreateBasketForUser(string userName)
     {
-        var basketSpec = new BasketWithItemsSpecification(userName);
-        var basket = (await _basketRepository.FirstOrDefaultAsync(basketSpec));
-
+        var spec = new BasketWithItemsSpecification(userName);
+        var basket = await _basketRepository.FirstOrDefaultAsync(spec);
         if (basket == null)
         {
-            return await CreateBasketForUser(userName);
+            basket = new Basket(userName);
+            await _basketRepository.AddAsync(basket);
         }
-        var viewModel = await Map(basket);
-        return viewModel;
+        return await MapAsync(basket);
     }
 
-    private async Task<BasketViewModel> CreateBasketForUser(string userId)
-    {
-        var basket = new Basket(userId);
-        await _basketRepository.AddAsync(basket);
+    public Task<int> CountTotalBasketItems(string userName) => _basketQueryService.CountTotalBasketItems(userName);
 
-        return new BasketViewModel()
+    public async Task<BasketViewModel> AddItemToBasket(string userName, int catalogItemId, decimal price, int quantity = 1)
+    {
+        var spec = new BasketWithItemsSpecification(userName);
+        var basket = await _basketRepository.FirstOrDefaultAsync(spec);
+        if (basket == null)
         {
-            BuyerId = basket.BuyerId,
-            Id = basket.Id,
-        };
+            basket = new Basket(userName);
+            await _basketRepository.AddAsync(basket);
+        }
+        basket.AddItem(catalogItemId, price, quantity);
+        await _basketRepository.UpdateAsync(basket);
+        return await MapAsync(basket);
     }
 
-    private async Task<List<BasketItemViewModel>> GetBasketItems(IReadOnlyCollection<BasketItem> basketItems)
+    public async Task<BasketViewModel> UpdateQuantities(int basketId, Dictionary<int, int> quantities)
     {
-        var catalogItemsSpecification = new CatalogItemsSpecification(basketItems.Select(b => b.CatalogItemId).ToArray());
-        var catalogItems = await _itemRepository.ListAsync(catalogItemsSpecification);
-
-        var items = basketItems.Select(basketItem =>
+        var spec = new BasketWithItemsSpecification(basketId);
+        var basket = await _basketRepository.FirstOrDefaultAsync(spec);
+        if (basket == null) return new BasketViewModel();
+        foreach (var item in basket.Items)
         {
-            var catalogItem = catalogItems.First(c => c.Id == basketItem.CatalogItemId);
+            if (quantities.TryGetValue(item.Id, out var q)) item.SetQuantity(q);
+        }
+        basket.RemoveEmptyItems();
+        await _basketRepository.UpdateAsync(basket);
+        return await MapAsync(basket);
+    }
 
-            var basketItemViewModel = new BasketItemViewModel
+    private async Task<BasketViewModel> MapAsync(Basket basket)
+    {
+        var vm = new BasketViewModel { Id = basket.Id, BuyerId = basket.BuyerId };
+        if (!basket.Items.Any()) return vm;
+
+        var catalogIds = basket.Items.Select(i => i.CatalogItemId).Distinct().ToArray();
+        var catalogItems = await _catalogItemRepository.ListAsync(new CatalogItemsSpecification(catalogIds));
+        var lookup = catalogItems.ToDictionary(ci => ci.Id, ci => ci);
+
+        foreach (var item in basket.Items)
+        {
+            lookup.TryGetValue(item.CatalogItemId, out var cat);
+            var pic = cat?.PictureUri ?? string.Empty;
+            if (!string.IsNullOrEmpty(pic)) pic = _uriComposer.ComposePicUri(pic);
+            vm.Items.Add(new BasketItemViewModel
             {
-                Id = basketItem.Id,
-                UnitPrice = basketItem.UnitPrice,
-                Quantity = basketItem.Quantity,
-                CatalogItemId = basketItem.CatalogItemId,
-                PictureUrl = _uriComposer.ComposePicUri(catalogItem.PictureUri),
-                ProductName = catalogItem.Name
-            };
-            return basketItemViewModel;
-        }).ToList();
-
-        return items;
-    }
-
-    public async Task<BasketViewModel> Map(Basket basket)
-    {
-        return new BasketViewModel()
-        {
-            BuyerId = basket.BuyerId,
-            Id = basket.Id,
-            Items = await GetBasketItems(basket.Items)
-        };
-    }
-
-    public async Task<int> CountTotalBasketItems(string username)
-    {
-        var counter = await _basketQueryService.CountTotalBasketItems(username);
-
-        return counter;
+                Id = item.Id,
+                CatalogItemId = item.CatalogItemId,
+                // Use description (or name) for display instead of numeric id
+                ProductName = !string.IsNullOrEmpty(cat?.Description) ? cat!.Description : (cat?.Name ?? item.CatalogItemId.ToString()),
+                UnitPrice = item.UnitPrice,
+                OldUnitPrice = item.UnitPrice,
+                Quantity = item.Quantity,
+                PictureUrl = pic
+            });
+        }
+        return vm;
     }
 }

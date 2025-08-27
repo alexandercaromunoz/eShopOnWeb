@@ -1,41 +1,43 @@
-﻿@page
+@page
+@using Microsoft.eShopWeb.Web.Areas.Identity.Pages.Account
 @model RegisterModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
+    Layout = "/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Register";
 }
-
+<section class="esh-catalog-hero">
+    <div class="container">
+        <img class="esh-catalog-title" src="~/images/main_banner_text.png" />
+    </div>
+</section>
 <div class="container">
-
-    <h2>@ViewData["Title"]</h2>
-
     <div class="row">
-        <div class="col-md-8">
-            <form asp-route-returnUrl="@Model.ReturnUrl" method="post">
-                <h4>Create a new account.</h4>
-                <hr />
-                <div asp-validation-summary="All" class="text-danger"></div>
-                <div class="form-group">
-                    <label asp-for="Input.Email"></label>
-                    <input asp-for="Input.Email" class="form-control" />
+        <div class="col-md-6 col-sm-12">
+            <h1 class="mb-4">Create account</h1>
+            <form method="post" class="esh-form" asp-route-returnUrl="@Model.ReturnUrl">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="form-group mb-3">
+                    <label asp-for="Input.Email" class="control-label">Email</label>
+                    <input asp-for="Input.Email" class="form-control esh-input" autocomplete="email" />
                     <span asp-validation-for="Input.Email" class="text-danger"></span>
                 </div>
-                <div class="form-group">
-                    <label asp-for="Input.Password"></label>
-                    <input asp-for="Input.Password" class="form-control" />
+                <div class="form-group mb-3">
+                    <label asp-for="Input.Password" class="control-label">Password</label>
+                    <input asp-for="Input.Password" class="form-control esh-input" autocomplete="new-password" />
                     <span asp-validation-for="Input.Password" class="text-danger"></span>
                 </div>
-                <div class="form-group">
-                    <label asp-for="Input.ConfirmPassword"></label>
-                    <input asp-for="Input.ConfirmPassword" class="form-control" />
+                <div class="form-group mb-4">
+                    <label asp-for="Input.ConfirmPassword" class="control-label">Confirm Password</label>
+                    <input asp-for="Input.ConfirmPassword" class="form-control esh-input" autocomplete="new-password" />
                     <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
                 </div>
-                <button type="submit" class="btn btn-default">Register</button>
+                <button type="submit" class="btn esh-basket-checkout">[ Register ]</button>
+                <a asp-page="/Account/Login" class="btn esh-basket-checkout ms-2">[ Login ]</a>
             </form>
         </div>
     </div>
-
 </div>
-
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }

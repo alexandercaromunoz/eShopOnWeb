@@ -41,9 +41,7 @@
                             </section>
                             <section class="esh-basket-item esh-basket-item--middle esh-basket-item--mark col-xs-2">$ @Math.Round(item.Quantity * item.UnitPrice, 2).ToString("N2")</section>
                         </div>
-                        <div class="row">
-
-                        </div>
+                        <div class="row"></div>
                     </article>
                 }
 
@@ -57,17 +55,42 @@
                         <section class="esh-basket-item col-xs-10"></section>
                         <section class="esh-basket-item esh-basket-item--mark col-xs-2">$ @Model.BasketModel.Total().ToString("N2")</section>
                     </article>
-
-                    <article class="esh-basket-items row">
-                        <section class="esh-basket-item col-xs-7"></section>
-                    </article>
                 </div>
-                <div class="row">
-                    <section class="esh-basket-item col-xs-1">
+
+                <fieldset class="col-md-8 mt-4">
+                    <legend>Shipping Address</legend>
+                    <div class="mb-2">
+                        <label for="Street" class="form-label">Street</label>
+                        <input id="Street" name="Street" class="form-control" required />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label for="City" class="form-label">City</label>
+                            <input id="City" name="City" class="form-control" required />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label for="State" class="form-label">State</label>
+                            <input id="State" name="State" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label for="Country" class="form-label">Country</label>
+                            <input id="Country" name="Country" class="form-control" required />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label for="ZipCode" class="form-label">Zip / Postal Code</label>
+                            <input id="ZipCode" name="ZipCode" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <button type="submit" class="btn esh-basket-checkout">[ Pay Now ]</button>
+                    </div>
+                </fieldset>
+
+                <div class="row mt-3">
+                    <section class="esh-basket-item col-xs-12">
                         <a asp-page="Index" class="btn esh-basket-checkout text-white">[ Back ]</a>
-                    </section>
-                    <section class="esh-basket-item col-xs-push-7 col-xs-4 text-right">
-                        <input type="submit" class="btn esh-basket-checkout" value="[ Pay Now ]" />
                     </section>
                 </div>
             </div>

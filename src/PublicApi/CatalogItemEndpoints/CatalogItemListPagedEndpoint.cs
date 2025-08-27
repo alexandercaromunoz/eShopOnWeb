@@ -67,6 +67,7 @@ public class CatalogItemListPagedEndpoint : IEndpoint<IResult, ListPagedCatalogI
         {
             response.PageCount = totalItems > 0 ? 1 : 0;
         }
+        response.TotalItems = totalItems;
 
         return Results.Ok(response);
     }

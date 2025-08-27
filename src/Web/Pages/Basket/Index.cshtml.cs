@@ -1,100 +1,54 @@
-﻿using Ardalis.GuardClauses;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.eShopWeb.ApplicationCore.Entities;
-using Microsoft.eShopWeb.ApplicationCore.Interfaces;
 using Microsoft.eShopWeb.Web.Interfaces;
-using Microsoft.eShopWeb.Web.ViewModels;
+using Microsoft.eShopWeb.Web.Pages.Basket;
 
 namespace Microsoft.eShopWeb.Web.Pages.Basket;
 
 public class IndexModel : PageModel
 {
-    private readonly IBasketService _basketService;
-    private readonly IBasketViewModelService _basketViewModelService;
-    private readonly IRepository<CatalogItem> _itemRepository;
+    private readonly IBasketViewModelService _basketService;
 
-    public IndexModel(IBasketService basketService,
-        IBasketViewModelService basketViewModelService,
-        IRepository<CatalogItem> itemRepository)
+    public IndexModel(IBasketViewModelService basketService)
     {
         _basketService = basketService;
-        _basketViewModelService = basketViewModelService;
-        _itemRepository = itemRepository;
     }
 
     public BasketViewModel BasketModel { get; set; } = new BasketViewModel();
 
     public async Task OnGet()
     {
-        BasketModel = await _basketViewModelService.GetOrCreateBasketForUser(GetOrSetBasketCookieAndUserName());
+        BasketModel = await _basketService.GetOrCreateBasketForUser(GetOrSetBasketCookieAndUserName());
     }
 
-    public async Task<IActionResult> OnPost(CatalogItemViewModel productDetails)
+    public async Task<IActionResult> OnPost(int productId, decimal price)
     {
-        if (productDetails?.Id == null)
-        {
-            return RedirectToPage("/Index");
-        }
-
-        var item = await _itemRepository.GetByIdAsync(productDetails.Id);
-        if (item == null)
-        {
-            return RedirectToPage("/Index");
-        }
-
+        if (productId <= 0 || price <= 0) return RedirectToPage("/Index");
         var username = GetOrSetBasketCookieAndUserName();
-        var basket = await _basketService.AddItemToBasket(username,
-            productDetails.Id, item.Price);
-
-        BasketModel = await _basketViewModelService.Map(basket);
-
+        BasketModel = await _basketService.AddItemToBasket(username, productId, price, 1);
         return RedirectToPage();
     }
 
     public async Task OnPostUpdate(IEnumerable<BasketItemViewModel> items)
     {
-        if (!ModelState.IsValid)
-        {
-            return;
-        }
-
-        var basketView = await _basketViewModelService.GetOrCreateBasketForUser(GetOrSetBasketCookieAndUserName());
-        var updateModel = items.ToDictionary(b => b.Id.ToString(), b => b.Quantity);
-        var basket = await _basketService.SetQuantities(basketView.Id, updateModel);
-        BasketModel = await _basketViewModelService.Map(basket);
+        if (!ModelState.IsValid) return;
+        var existing = await _basketService.GetOrCreateBasketForUser(GetOrSetBasketCookieAndUserName());
+        var dict = items.ToDictionary(b => b.Id, b => b.Quantity);
+        BasketModel = await _basketService.UpdateQuantities(existing.Id, dict);
     }
 
     private string GetOrSetBasketCookieAndUserName()
     {
-        Guard.Against.Null(Request.HttpContext.User.Identity, nameof(Request.HttpContext.User.Identity));
         string? userName = null;
-
-        if (Request.HttpContext.User.Identity.IsAuthenticated)
-        {
-            Guard.Against.Null(Request.HttpContext.User.Identity.Name, nameof(Request.HttpContext.User.Identity.Name));
-            return Request.HttpContext.User.Identity.Name!;
-        }
-
         if (Request.Cookies.ContainsKey(Constants.BASKET_COOKIENAME))
         {
             userName = Request.Cookies[Constants.BASKET_COOKIENAME];
-
-            if (!Request.HttpContext.User.Identity.IsAuthenticated)
-            {
-                if (!Guid.TryParse(userName, out var _))
-                {
-                    userName = null;
-                }
-            }
+            if (!Guid.TryParse(userName, out _)) userName = null;
         }
         if (userName != null) return userName;
-
         userName = Guid.NewGuid().ToString();
-        var cookieOptions = new CookieOptions { IsEssential = true };
-        cookieOptions.Expires = DateTime.Today.AddYears(10);
+        var cookieOptions = new CookieOptions { IsEssential = true, Expires = DateTime.Today.AddYears(10) };
         Response.Cookies.Append(Constants.BASKET_COOKIENAME, userName, cookieOptions);
-
         return userName;
     }
 }

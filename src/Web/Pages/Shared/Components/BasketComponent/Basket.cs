@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Ardalis.GuardClauses;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.eShopWeb.Infrastructure.Identity;
 using Microsoft.eShopWeb.Web.Interfaces;
 using Microsoft.eShopWeb.Web.ViewModels;
 
@@ -12,37 +9,29 @@ namespace Microsoft.eShopWeb.Web.Pages.Shared.Components.BasketComponent;
 public class Basket : ViewComponent
 {
     private readonly IBasketViewModelService _basketService;
-    private readonly SignInManager<ApplicationUser> _signInManager;
 
-    public Basket(IBasketViewModelService basketService,
-                    SignInManager<ApplicationUser> signInManager)
+    public Basket(IBasketViewModelService basketService)
     {
         _basketService = basketService;
-        _signInManager = signInManager;
     }
 
     public async Task<IViewComponentResult> InvokeAsync()
     {
-        var vm = new BasketComponentViewModel
+        int count = 0;
+        try
         {
-            ItemsCount = await CountTotalBasketItems()
-        };
-        return View(vm);
-    }
-
-    private async Task<int> CountTotalBasketItems()
-    {
-        if (_signInManager.IsSignedIn(HttpContext.User))
-        {
-            Guard.Against.Null(User?.Identity?.Name, nameof(User.Identity.Name));
-            return await _basketService.CountTotalBasketItems(User.Identity.Name);
+            var id = GetAnnonymousIdFromCookie();
+            if (id != null)
+            {
+                count = await _basketService.CountTotalBasketItems(id);
+            }
         }
-
-        string? anonymousId = GetAnnonymousIdFromCookie();
-        if (anonymousId == null)
-            return 0;
-
-        return await _basketService.CountTotalBasketItems(anonymousId);
+        catch (InvalidOperationException)
+        {
+            count = 0;
+        }
+        var vm = new BasketComponentViewModel { ItemsCount = count };
+        return View(vm);
     }
 
     private string? GetAnnonymousIdFromCookie()
@@ -50,11 +39,7 @@ public class Basket : ViewComponent
         if (Request.Cookies.ContainsKey(Constants.BASKET_COOKIENAME))
         {
             var id = Request.Cookies[Constants.BASKET_COOKIENAME];
-
-            if (Guid.TryParse(id, out var _))
-            {
-                return id;
-            }
+            if (Guid.TryParse(id, out _)) return id;
         }
         return null;
     }
